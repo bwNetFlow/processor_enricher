@@ -1,5 +1,4 @@
-Enricher
-=
+# Enricher
 
 This is the Enricher component of the [bwNetFlow][bwNetFlow] platform. It
 supports taking protobuf-encoded [flow messages][protobuf] from a specified
@@ -19,8 +18,7 @@ NetFlow collector to determine which IP to look at. This processor assumes that
 you collect flows from your external border interfaces. Alternative setups will
 have to be implemented as configurable options.
 
-Usage
-==
+## Usage
 
 The simplest call could look like this, which would start the enricher process
 with TLS encryption and SASL auth enabled and all outputs working.
