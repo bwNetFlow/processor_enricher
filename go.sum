@@ -49,6 +49,8 @@ github.com/bwNetFlow/kafkaconnector v0.0.0-20200518120843-6e95662de222 h1:xVBzng
 github.com/bwNetFlow/kafkaconnector v0.0.0-20200518120843-6e95662de222/go.mod h1:AFVkZvbvo/ueuozBfKHsKhyEIXXXDqRMfV1xoKxniFk=
 github.com/bwNetFlow/kafkaconnector v0.0.0-20201020151646-77a015fe550e h1:T1rfxdyGKMDLMYk1FzPnd3YzxEB78I5/18YgcRx/IAo=
 github.com/bwNetFlow/kafkaconnector v0.0.0-20201020151646-77a015fe550e/go.mod h1:R6MPTgZjYE07gbK+nYlf6LuJS24/uJn06uVDiv6fQYA=
+github.com/bwNetFlow/kafkaconnector v0.0.0-20201022170711-8e1c6bdf17c1 h1:sQZpxz3OeRgXL5pOQGGl4xk+VwMxtw1yOy5ZAqeD6vc=
+github.com/bwNetFlow/kafkaconnector v0.0.0-20201022170711-8e1c6bdf17c1/go.mod h1:R6MPTgZjYE07gbK+nYlf6LuJS24/uJn06uVDiv6fQYA=
 github.com/bwNetFlow/protobuf/go v0.0.0-20200514124336-bf8695918c8c h1:ApSpSmY1BMiKstQ+ZJ94viKdjTWGg7sWw5CO2UGcPKo=
 github.com/bwNetFlow/protobuf/go v0.0.0-20200514124336-bf8695918c8c/go.mod h1:MhZaptdapMCx+cAla29K+uuVIL66PW2BcTPpueWq+aA=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
