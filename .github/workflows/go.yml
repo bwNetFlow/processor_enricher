@@ -1,0 +1,73 @@
+---
+name: run full build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build binary
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: set up go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+
+      - name: check out to go module directory
+        uses: actions/checkout@v2
+
+      - name: get dependencies
+        run: go get -v -t -d ./...
+
+      - name: build
+        run: go build -v .
+
+      - name: upload binary as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./${{ github.event.repository.name }}
+          name: ${{ github.event.repository.name }}
+          if-no-files-found: error
+
+  release:
+    name: create and publish release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    steps:
+
+      - name: create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
+
+      - name: get artifact from standard build
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.event.repository.name }}
+
+      - name: upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ github.event.repository.name }}
+          asset_name: ${{ github.event.repository.name }}
+          asset_content_type: application/octet-stream

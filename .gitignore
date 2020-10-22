@@ -1,0 +1,4 @@
+*.log
+config/interfaces.yml
+config/cid_db.csv
+config/GeoLite2-Country.mmdb
