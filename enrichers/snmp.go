@@ -184,11 +184,11 @@ func AddSnmp(flowmsg flow.FlowMessage) *flow.FlowMessage {
 	// "^_[a-z]{3}_[0-9]{5}_[0-9]{5}_ [A-Z0-9]+ (.*?) *( \\(.*)?$"
 
 	router := net.IP(flowmsg.SamplerAddress).String()
-	if flowmsg.SrcIf > 0 {
-		flowmsg.SrcIfName, flowmsg.SrcIfDesc, flowmsg.SrcIfSpeed = getCachedOrQuery(router, flowmsg.SrcIf)
+	if flowmsg.InIf > 0 {
+		flowmsg.SrcIfName, flowmsg.SrcIfDesc, flowmsg.SrcIfSpeed = getCachedOrQuery(router, flowmsg.InIf)
 	}
-	if flowmsg.DstIf > 0 {
-		flowmsg.DstIfName, flowmsg.DstIfDesc, flowmsg.DstIfSpeed = getCachedOrQuery(router, flowmsg.DstIf)
+	if flowmsg.OutIf > 0 {
+		flowmsg.DstIfName, flowmsg.DstIfDesc, flowmsg.DstIfSpeed = getCachedOrQuery(router, flowmsg.OutIf)
 	}
 	return &flowmsg
 }

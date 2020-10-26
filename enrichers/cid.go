@@ -80,8 +80,8 @@ func AddCid(address net.IP, flowmsg flow.FlowMessage) *flow.FlowMessage {
 	// if flowmsg.Cid == 0 {
 	// 	log.Printf("%v (%d -> %d, %v): CID unmatched!",
 	// 		router,
-	// 		flowmsg.SrcIf,
-	// 		flowmsg.DstIf,
+	// 		flowmsg.InIf,
+	// 		flowmsg.OutIf,
 	// 		address)
 	// }
 	return &flowmsg
