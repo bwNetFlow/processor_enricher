@@ -29,22 +29,22 @@ var (
 	kafkaDisableAuth = flag.Bool("kafka.disable_auth", false, "Whether to use auth or not")
 
 	// Cid Enricher. Adds Cid, needs local address
-	addCid = flag.Bool("output.cid", true, "Whether to populate the Cid Field.")
+	addCid = flag.Bool("output.cid", false, "Whether to populate the Cid Field.")
 	cidDb  = flag.String("config.cid_db", "config/example_cid_db.csv", "Location of the CID 'database', in CSV format.")
 
 	// GeoLoc Enricher. Adds RemoteCountry, needs remote address
-	addGeoLoc = flag.Bool("output.geoloc", true, "Whether to populate the RemoteCC Field.")
+	addGeoLoc = flag.Bool("output.geoloc", false, "Whether to populate the RemoteCC Field.")
 	geoLocDB  = flag.String("config.geoloc", "config/geolite2/GeoLite2-Country.mmdb", "Location of the GeoLite2 mmdb file.")
 
 	// SNMPIface Enricher. Adds interface information from SNMP, needs open firewalls on the sampling routers
 	// TODO: configurable set of snmp information retrived
-	addSnmp         = flag.Bool("output.snmp", true, "Whether to get interface info via SNMP.")
+	addSnmp         = flag.Bool("output.snmp", false, "Whether to get interface info via SNMP.")
 	snmpCommunity   = flag.String("config.snmp.community", "public", "The Community used when connecting via SNMP.")
 	snmpIfDescRegex = flag.String("config.snmp.ifdescregex", "(.*)", "The RegEx used to truncate the interface description.")
 
 	// Simple Enrichers. Adding stuff without any dependency
 	// TODO: configurable default to be used if the flow does not contain the sampling rate
-	addNormalize = flag.Bool("output.normalize", true, "Whether to normalize all size info according to sampling rate.")
+	addNormalize = flag.Bool("output.normalize", false, "Whether to normalize all size info according to sampling rate.")
 	// TODO: configurable set of 'well known' protocols which get a name
 	addProtoName = flag.Bool("output.protoname", true, "Whether to populate the ProtoName Field.")
 )

@@ -7,11 +7,13 @@ another Kafka topic.
 
 The current options for enrichment are:
 
- * Addition of customer IDs on a IP prefix basis
- * Addition of a geo-location field based on the flows external IP
- * Addition of a human-readable interface info from SNMP
- * Addition of a human-readable protocol field
- * Normalization with the sampling rate reported by the flow
+|   Cli Option | Docker Env | Default | Description |
+|---|---|---|---|
+| `--output.cid` | OUTPUT_CID | false | Addition of customer IDs on a IP prefix basis |
+| `--output.geoloc` | OUTPUT_GEOLOC | false | Addition of a geo-location field based on the flows external IP |
+| `--output.snmp` | OUTPUT_SNMP | false | Addition of a human-readable interface info from SNMP |
+| `--output.protoname` | OUTPUT_PROTONAME | true | Addition of a human-readable protocol field |
+| `--output.normalize` | OUTPUT_NORMALIZE | false | Normalization with the sampling rate reported by the flow |  
 
 Note that the first two need to make an assumption on the location of your
 NetFlow collector to determine which IP to look at. This processor assumes that
