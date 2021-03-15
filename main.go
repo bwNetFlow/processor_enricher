@@ -4,7 +4,6 @@ import (
 	"flag"
 	"io"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"time"
@@ -68,16 +67,19 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
-	if *addCid {
-		enrichers.InitCid(*cidDb)
+	enricher := enrichers.CombinedEnricher{
+		AddCID:          *addCid,
+		CIDDb:           *cidDb,
+		AddGeoLoc:       *addGeoLoc,
+		GeoLocDb:        *geoLocDB,
+		AddProtoName:    *addProtoName,
+		AddNormalize:    *addNormalize,
+		AddSNMP:         *addSnmp,
+		SNMPCommunity:   *snmpCommunity,
+		SNMPIfDescRegex: *snmpIfDescRegex,
 	}
-	if *addGeoLoc {
-		enrichers.InitGeoloc(*geoLocDB)
-		defer enrichers.CloseGeoloc()
-	}
-	if *addSnmp {
-		enrichers.InitSnmp(*snmpIfDescRegex, *snmpCommunity)
-	}
+
+	enricher.Initialize()
 
 	// connect to the Kafka cluster
 	var kafkaConn = kafka.Connector{}
@@ -128,44 +130,9 @@ func main() {
 				log.Println("Enricher ConsumerChannel closed. Investigate this!")
 				return
 			}
-			// determine local and remote address assumes the flow exporting
-			// interface ("observation point") is a peering/border interface
-			// TODO: make location of exporters configurable, dont assume border
-			var laddress, raddress net.IP
-			switch {
-			case flowmsg.FlowDirection == 0: // 0 is ingress
-				laddress, raddress = flowmsg.DstAddr, flowmsg.SrcAddr
-			case flowmsg.FlowDirection == 1: // 1 is egress
-				laddress, raddress = flowmsg.SrcAddr, flowmsg.DstAddr
-			}
-
-			// add the cid of the local address
-			if *addCid && laddress != nil {
-				flowmsg = enrichers.AddCid(laddress, *flowmsg)
-			}
-
-			// add the geoloc of the remote address
-			if *addGeoLoc && raddress != nil {
-				flowmsg = enrichers.AddGeoloc(raddress, *flowmsg)
-			}
-
-			// add the protocol name
-			if *addProtoName {
-				flowmsg = enrichers.AddProtoName(*flowmsg)
-			}
-
-			// normalize fields with their sampling rate
-			if *addNormalize {
-				flowmsg = enrichers.AddNormalize(*flowmsg)
-			}
-
-			// add the interface descriptions via SNMP
-			if *addSnmp {
-				flowmsg = enrichers.AddSnmp(*flowmsg)
-			}
 
 			//send to out topic
-			kafkaConn.ProducerChannel(*kafkaOutTopic) <- flowmsg
+			kafkaConn.ProducerChannel(*kafkaOutTopic) <- enricher.Process(flowmsg)
 		case <-signals:
 			return
 		}
