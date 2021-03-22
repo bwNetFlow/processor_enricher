@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"regexp"
-	"strings"
 	"time"
 )
 
@@ -23,6 +22,8 @@ var (
 	oidExts = map[string]uint8{"name": 1, "speed": 15, "desc": 18}
 
 	snmpSemaphore = semaphore.NewWeighted(64)
+	 
+	endsWithDesc = regexp.MustCompile(".*desc$")
 )
 
 type cacheEntry struct {
@@ -48,34 +49,8 @@ func refreshLoop() {
 				log.Println("SNMP refresh: Found blank key, initial Get pending.")
 				continue
 			}
-			s, err := gosnmp.NewGoSNMP(content.router, snmpCommunity, gosnmp.Version2c, 1)
-			if err != nil {
-				log.Println("SNMP refresh: Connection Error:", err)
-				continue
-			}
-			resp, err := s.Get(content.oid)
-			if err != nil {
-				log.Printf("SNMP refresh: Get failed for '%s' from %s.", content.oid, content.router)
-				log.Printf("              Error Message: %s\n", err)
-				continue
-			}
 
-			// parse and cache
-			if len(resp.Variables) == 1 {
-				new_answer := resp.Variables[0].Value
-				// this is somewhat ugly, maybe place this elsewhere?
-				if strings.Contains(key, "desc") {
-					actual := ifdescRegex.FindStringSubmatch(new_answer.(string))
-					if actual != nil && len(actual) > 1 {
-						new_answer = actual[1]
-					}
-				}
-				content.answer = new_answer
-				// reset expire and update, in case anything has changed
-				snmpCache.Set(key, content, cache.DefaultExpiration)
-			} else {
-				log.Printf("SNMP refresh: Bad response: %v", resp.Variables)
-			}
+			querySNMP(key, content.oid, content.router)
 		}
 		log.Println("SNMP refresh: Finished hourly run.")
 	}
@@ -83,9 +58,13 @@ func refreshLoop() {
 
 // Query a single SNMP datapoint and cache the result. Supposedly a short-lived
 // goroutine.
-func querySNMP(router string, iface uint32, datapoint string) {
+func queryNewSNMPEntry(router string, iface uint32, datapoint string) {
+	cache_key := fmt.Sprintf("%s %d %s", router, iface, datapoint)
 	oid := fmt.Sprintf(oidBase, oidExts[datapoint], iface)
 
+	querySNMP(cache_key, oid, router)
+}
+func querySNMP(cache_key string, oid string, router string) {
 	snmpSemaphore.Acquire(context.Background(), 1)
 	// release semaphore, UDP sockets are closed
 	defer func() { snmpSemaphore.Release(1) }()
@@ -105,14 +84,14 @@ func querySNMP(router string, iface uint32, datapoint string) {
 	// parse and cache
 	if len(resp.Variables) == 1 {
 		value := resp.Variables[0].Value // TODO: check data types maybe
-		// this is somewhat ugly, maybe place this elsewhere?
-		if datapoint == "desc" {
+		// Check if datapoint == desc
+		if endsWithDesc.Match([]byte(cache_key)) {
 			actual := ifdescRegex.FindStringSubmatch(value.(string))
 			if actual != nil && len(actual) > 1 {
 				value = actual[1]
 			}
 		}
-		snmpCache.Set(fmt.Sprintf("%s %d %s", router, iface, datapoint), cacheEntry{router, oid, value}, cache.DefaultExpiration)
+		snmpCache.Set(cache_key, cacheEntry{router, oid, value}, cache.DefaultExpiration)
 		// log.Printf("SNMP: Retrieved '%s' from %s.\n", oid, router)
 
 	} else {
@@ -159,7 +138,7 @@ func getCachedOrQuery(router string, iface uint32) (string, string, uint32) {
 			}
 		} else {
 			snmpCache.Set(fmt.Sprintf("%s %d %s", router, iface, datapoint), cacheEntry{}, cache.DefaultExpiration)
-			go querySNMP(router, iface, datapoint)
+			go queryNewSNMPEntry(router, iface, datapoint)
 		}
 	}
 	return name, desc, speed
