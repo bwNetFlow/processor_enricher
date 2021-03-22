@@ -35,6 +35,7 @@ type cacheEntry struct {
 // Refresh OID cache periodically. Needs no syncing or waiting, it will die
 // when main() exits. Tries to refresh all entries, ignores errors. If an entry
 // errors multiple times in a row, it will be expunged eventually.
+// Entries aren't queried in parallel.
 func refreshLoop() {
 	log.Println("SNMP refresh: Started.")
 	for {
@@ -137,6 +138,7 @@ func getCachedOrQuery(router string, iface uint32) (string, string, uint32) {
 				speed = uint32(entry.answer.(uint64))
 			}
 		} else {
+			// Add a placeholder entry, that will be eventually replaced by the queried metadata.
 			snmpCache.Set(fmt.Sprintf("%s %d %s", router, iface, datapoint), cacheEntry{}, cache.DefaultExpiration)
 			go queryNewSNMPEntry(router, iface, datapoint)
 		}
