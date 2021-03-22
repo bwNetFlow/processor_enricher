@@ -1,10 +1,12 @@
 package enrichers
 
 import (
+	"context"
 	"fmt"
 	"github.com/alouca/gosnmp"
 	flow "github.com/bwNetFlow/protobuf/go"
 	cache "github.com/patrickmn/go-cache"
+	"golang.org/x/sync/semaphore"
 	"log"
 	"net"
 	"regexp"
@@ -20,7 +22,7 @@ var (
 	oidBase = ".1.3.6.1.2.1.31.1.1.1.%d.%d"
 	oidExts = map[string]uint8{"name": 1, "speed": 15, "desc": 18}
 
-	snmpSemaphore = make(chan struct{}, 64)
+	snmpSemaphore = semaphore.NewWeighted(64)
 )
 
 type cacheEntry struct {
@@ -84,9 +86,9 @@ func refreshLoop() {
 func querySNMP(router string, iface uint32, datapoint string) {
 	oid := fmt.Sprintf(oidBase, oidExts[datapoint], iface)
 
-	snmpSemaphore <- struct{}{} // acquire
+	snmpSemaphore.Acquire(context.Background(), 1)
 	// release semaphore, UDP sockets are closed
-	defer func(){<-snmpSemaphore}()
+	defer func() { snmpSemaphore.Release(1) }()
 
 	s, err := gosnmp.NewGoSNMP(router, snmpCommunity, gosnmp.Version2c, 1)
 	if err != nil {
