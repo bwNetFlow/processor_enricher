@@ -83,24 +83,22 @@ func refreshLoop() {
 // goroutine.
 func querySNMP(router string, iface uint32, datapoint string) {
 	oid := fmt.Sprintf(oidBase, oidExts[datapoint], iface)
+
 	snmpSemaphore <- struct{}{} // acquire
+	// release semaphore, UDP sockets are closed
+	defer func(){<-snmpSemaphore}()
 
 	s, err := gosnmp.NewGoSNMP(router, snmpCommunity, gosnmp.Version2c, 1)
 	if err != nil {
 		log.Println("SNMP: Connection Error:", err)
-		<-snmpSemaphore // release
 		return
 	}
 	resp, err := s.Get(oid)
 	if err != nil {
 		log.Printf("SNMP: Get failed for '%s' from %s.", oid, router)
 		log.Printf("      Error Message: %s\n", err)
-		<-snmpSemaphore // release
 		return
 	}
-
-	// release semaphore, UDP sockets are closed
-	<-snmpSemaphore
 
 	// parse and cache
 	if len(resp.Variables) == 1 {
