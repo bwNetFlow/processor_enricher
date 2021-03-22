@@ -68,18 +68,9 @@ func refreshLoop() {
 						new_answer = actual[1]
 					}
 				}
-				if new_answer != content.answer {
-					// .Replace actually, but Set does not
-					// error if the key expired meanwhile
-					snmpCache.Set(
-						key,
-						cacheEntry{content.router, content.oid, new_answer},
-						cache.DefaultExpiration)
-					log.Printf("SNMP refresh: Updated '%s' from %s.\n", content.oid, content.router)
-				} else {
-					// reset expire
-					snmpCache.Set(key, content, cache.DefaultExpiration)
-				}
+				content.answer = new_answer
+				// reset expire and update, in case anything has changed
+				snmpCache.Set(key, content, cache.DefaultExpiration)
 			} else {
 				log.Printf("SNMP refresh: Bad response: %v", resp.Variables)
 			}
@@ -133,7 +124,12 @@ func querySNMP(router string, iface uint32, datapoint string) {
 // up hourly refreshs of the cached data.
 func InitSnmp(regex string, community string) {
 	snmpCache = cache.New(3*time.Hour, 1*time.Hour)
-	ifdescRegex, _ = regexp.Compile(regex)
+
+	var err error
+	if ifdescRegex, err = regexp.Compile(regex); err != nil {
+		log.Fatal("Enricher: Failed to compile regular expression", err)
+	}
+
 	snmpCommunity = community
 
 	go refreshLoop()
@@ -145,7 +141,7 @@ func InitSnmp(regex string, community string) {
 func getCachedOrQuery(router string, iface uint32) (string, string, uint32) {
 	var name, desc string
 	var speed uint32
-	for datapoint, _ := range oidExts {
+	for datapoint := range oidExts {
 		if value, found := snmpCache.Get(fmt.Sprintf("%s %d %s", router, iface, datapoint)); found {
 			entry := value.(cacheEntry)
 			if entry.answer == nil {
